@@ -4,9 +4,11 @@
 #include <stack>
 #include <regex>
 
-std::string normalize(std::string input) {
+using namespace std;
+
+string normalize(string input) {
     input.erase(remove(input.begin(), input.end(), ' '), input.end());
-    std::string ans="";
+    string ans="";
     int n=input.size();
     int i=0;
 
@@ -44,21 +46,21 @@ std::string normalize(std::string input) {
 
         ans.push_back(input[i]);
         i++;
-        //std::cout<<"..."<<ans<<'\n';
+        //cout<<"..."<<ans<<'\n';
     }
     //√ = alt + 251
 
     return ans;
 }
 
-bool validate_prantesize(std::string input){
-    std::stack <char> s;
+bool validate_prantesize(string input){
+    stack <char> s;
     bool correct=true;
     int n=input.length();
     for(int i=0;i<n;i++){
         if(input[i]=='(') s.push('(');
         if(s.empty() && input[i]==')'){
-            for(int j=i;j<n;j++) if(input[j]==')' && input[j]!='(') std::cout<<" position "<<j<<" extra \')\' \n";
+            for(int j=i;j<n;j++) if(input[j]==')' && input[j]!='(') cout<<" position "<<j<<" extra \')\' \n";
             correct=false;
         }
         if( !s.empty() && input[i]==')') s.pop();
@@ -68,43 +70,43 @@ bool validate_prantesize(std::string input){
     while(!s.empty()){
         temp=s.top();
         s.pop();
-        std::cout<<"extra \'(\' detected \n";
+        cout<<"extra \'(\' detected \n";
         correct=false;
     }
     return correct;
 
 }
 
-bool validate_regex(const std::string& s) {
-    std::regex opration_prantesize("([+\\-*/])\\)");
-    if (std::regex_search(s,opration_prantesize)) return false;
+bool validate_regex(const string& s) {
+    regex opration_prantesize("([+\\-*/])\\)");
+    if (regex_search(s,opration_prantesize)) return false;
 
-    std::regex leading_zero("(^|[^0-9])0[0-9]");
-    if (std::regex_search(s, leading_zero)) return false;
+    regex leading_zero("(^|[^0-9])0[0-9]");
+    if (regex_search(s, leading_zero)) return false;
 
-    std::regex number_letter_number("[0-9][A-Za-z][0-9]");
-    if (std::regex_search(s, number_letter_number)) return false;
+    regex number_letter_number("[0-9][A-Za-z][0-9]");
+    if (regex_search(s, number_letter_number)) return false;
 
-    std::regex double_mul_div("[*\\/]{2,}");
-    if (std::regex_search(s, double_mul_div)) return false;
+    regex double_mul_div("[*\\/]{2,}");
+    if (regex_search(s, double_mul_div)) return false;
 
-    std::regex plusminus_bad_after("[+\\-][*\\/]");
-    if (std::regex_search(s, plusminus_bad_after)) return false;
+    regex plusminus_bad_after("[+\\-][*\\/]");
+    if (regex_search(s, plusminus_bad_after)) return false;
 
-    std::regex muldiv_bad_after("[*\\/][+\\-]");
-    if (std::regex_search(s, muldiv_bad_after)) return false;
+    regex muldiv_bad_after("[*\\/][+\\-]");
+    if (regex_search(s, muldiv_bad_after)) return false;
 
     return true;
 }
 
-std::string get_variables(std::string s){
-    std::string ans="";
+string get_variables(string s){
+    string ans="";
     int n;
     for(int i=0;i<s.length();i++){
         if(isalpha(s[i])){
-            std::cout<<" give the value of "<<s[i]<<" variable \n";
-            std::cin>>n;
-            ans+=std::to_string(n);
+            cout<<" give the value of "<<s[i]<<" variable \n";
+            cin>>n;
+            ans+=to_string(n);
         }
         else{
             ans+=s[i];
@@ -113,14 +115,14 @@ std::string get_variables(std::string s){
     return ans;
 }
 
-std::vector<std::string> tokenize(std::string s){
-    std::vector<std::string> tok;
+vector<string> tokenize(string s){
+    vector<string> tok;
     int n = s.size();
     int i = 0;
 
     while(i<n){
         if(isdigit(s[i])){
-            std::string num="";
+            string num="";
             while(i<n && isdigit(s[i])){
                 num+=s[i];
                 i++;
@@ -135,7 +137,7 @@ std::vector<std::string> tokenize(std::string s){
         }
 
         if (s[i]=='(' || s[i]==')' || s[i]=='+' || s[i]=='-' || s[i]=='*' || s[i]=='/' || s[i]=='^'){
-            tok.push_back(std::string(1,s[i]));
+            tok.push_back(string(1,s[i]));
             i++;
             continue;
         }
@@ -144,23 +146,148 @@ std::vector<std::string> tokenize(std::string s){
     return tok;
 }
 
+// Expression tree implementation
+
+struct Node {
+    string value;
+    Node* left;
+    Node* right;
+    Node(string val) : value(val), left(nullptr), right(nullptr) {}
+};
+
+struct Parser {
+    const vector<string>& tokens;
+    size_t pos = 0;
+
+    Parser(const vector<string>& t) : tokens(t) {}
+
+    bool end() const { return pos >= tokens.size(); }
+    const string& peek() const { return tokens[pos]; }
+    const string& next() { return tokens[pos++]; }
+
+    Node* parseStart() {
+        Node* root = parseOp1Term();
+        if (!end()) throw runtime_error("Unexpected tokens after expression");
+        return root;
+    }
+
+    Node* parseOp1Term() {
+        Node* node = parseOp2Term();
+        while (!end() && (peek() == "+" || peek() == "-")) {
+            string op = next();
+            Node* right = parseOp2Term();
+            Node* parent = new Node(op);
+            parent->left = node;
+            parent->right = right;
+            node = parent;
+        }
+        return node;
+    }
+
+    Node* parseOp2Term() {
+        Node* node = parseFactor();
+        while (!end() && (peek() == "*" || peek() == "/")) {
+            string op = next();
+            Node* right = parseFactor();
+            Node* parent = new Node(op);
+            parent->left = node;
+            parent->right = right;
+            node = parent;
+        }
+        return node;
+    }
+
+    Node* parseFactor() {
+        if (peek() == "(") {
+            next(); 
+            Node* inside = parseOp1Term();
+            if (peek() != ")") throw runtime_error("Missing ')'");
+            next(); 
+            return inside;
+        }
+        return new Node(next());
+    }
+};
+
+void printPostorder(Node* root) {
+    if (!root) return;
+    printPostorder(root->left);
+    printPostorder(root->right);
+    cout << root->value << " ";
+}
+
+int evaluate(Node* root) {
+    if (!root) return 0;
+
+    if (isdigit(root->value[0])) {
+        return stoi(root->value);
+    }
+
+    int leftVal = evaluate(root->left);
+    int rightVal = evaluate(root->right);
+
+    if (root->value == "+") return leftVal + rightVal;
+    if (root->value == "-") return leftVal - rightVal;
+    if (root->value == "*") return leftVal * rightVal;
+    if (root->value == "/") {
+        if (rightVal == 0) throw runtime_error("Division by zero");
+        return leftVal / rightVal;
+    }
+
+    throw runtime_error("Unknown operator: " + root->value);
+}
 
 int main() {
-    std::string s;
-    std::getline(std::cin,s);
-    std::string ans = normalize(s);
+    string s;
+    getline(cin,s);
+    string ans = normalize(s);
     bool result=validate_prantesize(s);
     bool regex_check=validate_regex(s);
-    std::string varibale_counted=get_variables(ans);
-    if(!regex_check) std::cout<<"...";
+    string varibale_counted=get_variables(ans);
+    if(!regex_check) cout<<"...";
     if(result && regex_check){
-        //std::cout<<varibale_counted;
+        //cout<<varibale_counted;
     }
-    std::vector<std::string> token=tokenize(varibale_counted);
+    vector<string> token=tokenize(varibale_counted);
     for(int i=0;i<token.size();i++){
-        //std::cout<<token[i]<<" ";
+        //cout<<token[i]<<" ";
     }
+    
+    Parser P(token);
+    Node* root = P.parseStart();
 
-    //in token akhar vorodi ghesmat shoma mishe
+    cout << "Postorder: ";
+    printPostorder(root);
+    cout << "\n";
+
+    cout << "Result: " << evaluate(root) << "\n";
 
 }
+
+//++2 + --3 - -+-4
+// Postorder: 2 3 + 4 - 
+// Result: 1
+//which should be 9!
+
+// -(-2 + 3)
+// terminate called after throwing an instance of 'std::runtime_error'
+//   what():  Unexpected tokens after expression
+
+//(0 - ( -2 + 3 ))
+// terminate called after throwing an instance of 'std::runtime_error'
+//   what():  Missing ')'
+
+// 2 + 3 * 4 5
+// Postorder: 2 3 45 * + 
+// Result: 137
+// should print Unexpected tokens after expression
+
+// 02 + 3
+// ...Postorder: 02 3 + 
+// Result: 5
+// Because leading_zero regex matches and returns false; program prints “...”.
+// should exit
+
+// +++(---2 + ++3) * -+-+4
+// terminate called after throwing an instance of 'std::runtime_error'
+//   what():  Missing ')'
