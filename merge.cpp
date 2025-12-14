@@ -100,14 +100,26 @@ bool validate_regex(const string& s) {
     return true;
 }
 
-string get_variables(string s){
+string get_variables(string s,vector<string> var){
     string ans="";
     int n;
     for(int i=0;i<s.length();i++){
         if(isalpha(s[i])){
-            cout<<" give the value of "<<s[i]<<" variable \n";
-            cin>>n;
-            ans+=to_string(n);
+            bool is_there=false;
+            for(int j=0;j<var.size();j++){
+                if(var[j]== string(1,s[i])){
+                    is_there=true;
+                }
+            }  
+            if(is_there){
+                cout<<" give the value of "<<s[i]<<" variable \n";
+                cin>>n;
+                ans+=to_string(n);
+                is_there=false;
+            }
+            else{
+                ans+="0";
+            }
         }
         else{
             ans+=s[i];
@@ -159,8 +171,9 @@ struct Node {
 struct Parser {
     const vector<string>& tokens;
     size_t pos = 0;
+    vector<string> priorities;
 
-    Parser(const vector<string>& t) : tokens(t) {}
+    Parser(const vector<string>& t,vector<string> p) : tokens(t),priorities(p) {}
 
     bool end() const { return pos >= tokens.size(); }
     const string& peek() const { return tokens[pos]; }
@@ -289,12 +302,22 @@ int main() {
     string s;
     getline(cin,s);
     string ans = normalize(s);
+    vector<string> variables;
+    string temp;
+    cin>>temp;
+    while(temp!="-1"){
+        variables.push_back(temp);
+        cin>>temp;
+
+    }
+    
     bool result=validate_prantesize(ans);
     bool regex_check=validate_regex(ans);
-    string varibale_counted=get_variables(ans);
+    string varibale_counted=get_variables(ans,variables);
     if(!regex_check) cout<<"...";
-    if(result && regex_check){
+    if(!(result && regex_check)){
         //cout<<varibale_counted;
+        return 0;
     }
     vector<string> token=tokenize(varibale_counted);
     for(int i=0;i<token.size();i++){
