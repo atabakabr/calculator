@@ -83,8 +83,8 @@ bool validate_regex(const string& s) {
     regex opration_prantesize("([+\\-*/])\\)");
     if (regex_search(s,opration_prantesize)) return false;
 
-    regex leading_zero("(^|[^0-9])0[0-9]");
-    if (regex_search(s, leading_zero)) return false;
+    regex non_zero("(^|[^0-9])0[0-9]");
+    if (regex_search(s, non_zero)) return false;
 
     regex number_letter_number("[0-9][A-Za-z][0-9]");
     if (regex_search(s, number_letter_number)) return false;
@@ -160,8 +160,6 @@ vector<string> tokenize(string s){
     return tok;
 }
 
-// Expression tree implementation
-
 struct Node {
     string value;
     Node* left;
@@ -200,10 +198,10 @@ struct Parser {
     }
 
     Node* parseOp2Term() {
-        Node* node = parsePowerTerm();
+        Node* node = parsePowTerm();
         while (!end() && (peek() == priorities[2] || peek() == priorities[1])) {
             string op = next();
-            Node* right = parsePowerTerm();
+            Node* right = parsePowTerm();
             Node* parent = new Node(op);
             parent->left = node;
             parent->right = right;
@@ -212,7 +210,7 @@ struct Parser {
         return node;
     }
 
-    Node* parsePowerTerm() {
+    Node* parsePowTerm() {
         Node* node = parseFactor();
         while (!end() && peek() == priorities[0]) {
             string op = next();
@@ -255,21 +253,23 @@ struct Parser {
     }
 };
 
-void printPostorder(Node* root) {
+void print_postorder(Node* root) {
     if (!root) return;
-    printPostorder(root->left);
-    printPostorder(root->right);
+    print_postorder(root->left);
+    print_postorder(root->right);
     cout << root->value << " ";
 }
+int cp=0,cs=0,cd=0,cm=0;
 
-void dfs(Node* cur,ofstream& out){
+void dfs(Node* cur, ofstream& out) {
     if(!cur) return;
+    out <<"    n"<<cur<<" [label=\""<<cur->value<<"\"];\n";
     if(cur->left){
-        out << "    \""<<cur->value<<"\" -> \""<<cur->left->value<<"\";\n";
+        out <<"    n"<<cur<<" -> n"<<cur->left<<";\n";
         dfs(cur->left,out);
     }
     if(cur->right){
-        out<<"    \""<<cur->value<<"\" -> \""<< cur->right->value<<"\";\n";
+        out <<"    n"<<cur<<" -> n"<<cur->right<<";\n";
         dfs(cur->right,out);
     }
 }
@@ -285,24 +285,24 @@ void graph_tree(Node* root){
     out.close();
 }
 
-int evaluate(Node* root) {
+int CalThrough(Node* root) {
     if (!root) return 0;
 
     if (!root->value.empty() && isdigit((unsigned char)root->value[0])) {
         return stoi(root->value);
     }
 
-    bool isUnary = (root->left != nullptr && root->right == nullptr);
+    bool back = (root->left != nullptr && root->right == nullptr);
 
-    if (isUnary) {
-        int v = evaluate(root->left);
+    if (back) {
+        double v = CalThrough(root->left);
         if (root->value == "+") return v;
         if (root->value == "-") return -v;
-        if (root->value == "√") return (int)std::sqrt(v);
+        if (root->value == "√") return (double)std::sqrt(v);
     }
 
-    int leftVal = evaluate(root->left);
-    int rightVal = evaluate(root->right);
+    double leftVal = CalThrough(root->left);
+    double rightVal = CalThrough(root->right);
 
     if (root->value == "+") return leftVal + rightVal;
     if (root->value == "-") return leftVal - rightVal;
@@ -313,13 +313,12 @@ int evaluate(Node* root) {
     }
     if (root->value == "^") {
         double r = std::pow((double)leftVal, (double)rightVal);
-        return (int)r;
+        return (double)r;
     }
     if (root->value == "√") {
-        return (int)std::sqrt(leftVal);
+        return (double)std::sqrt(leftVal);
     }
-
-    throw runtime_error("Unknown operator: " + root->value);
+    // throw runtime_error("Unknown operator: " + root->value);
 }
 
 int main() {
@@ -374,9 +373,9 @@ int main() {
     system("dot -Tpng tree.dot -o tree.png");
     system("start tree.png");
     cout << "Postorder: ";
-    printPostorder(root);
+    print_postorder(root);
     cout << "\n";
 
-    cout << "Result: " << evaluate(root) << "\n";
+    cout << "Result: " << CalThrough(root) << "\n";
 
 }

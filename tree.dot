@@ -1,0 +1,24 @@
+digraph Tree {
+    node [shape=circle];
+    n0x26e64a581b0 [label="+"];
+    n0x26e64a581b0 -> n0x26e64a58030;
+    n0x26e64a58030 [label="+"];
+    n0x26e64a58030 -> n0x26e64a57fb0;
+    n0x26e64a57fb0 [label="+"];
+    n0x26e64a57fb0 -> n0x26e64a57c30;
+    n0x26e64a57c30 [label="3"];
+    n0x26e64a57fb0 -> n0x26e64a57f30;
+    n0x26e64a57f30 [label="*"];
+    n0x26e64a57f30 -> n0x26e64a57df0;
+    n0x26e64a57df0 [label="/"];
+    n0x26e64a57df0 -> n0x26e64a584b0;
+    n0x26e64a584b0 [label="6"];
+    n0x26e64a57df0 -> n0x26e64a57c70;
+    n0x26e64a57c70 [label="9"];
+    n0x26e64a57f30 -> n0x26e64a57e30;
+    n0x26e64a57e30 [label="5"];
+    n0x26e64a58030 -> n0x26e64a58330;
+    n0x26e64a58330 [label="7"];
+    n0x26e64a581b0 -> n0x26e64a580b0;
+    n0x26e64a580b0 [label="8"];
+}
