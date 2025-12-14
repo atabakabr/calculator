@@ -285,20 +285,20 @@ void graph_tree(Node* root){
     out.close();
 }
 
-int CalThrough(Node* root) {
+double CalThrough(Node* root) {
     if (!root) return 0;
 
     if (!root->value.empty() && isdigit((unsigned char)root->value[0])) {
-        return stoi(root->value);
+        return stod(root->value);
     }
 
     bool back = (root->left != nullptr && root->right == nullptr);
 
     if (back) {
-        double v = CalThrough(root->left);
+        int v = CalThrough(root->left);
         if (root->value == "+") return v;
         if (root->value == "-") return -v;
-        if (root->value == "√") return (double)std::sqrt(v);
+        if (root->value == "√") return std::sqrt(v);
     }
 
     double leftVal = CalThrough(root->left);
@@ -313,12 +313,13 @@ int CalThrough(Node* root) {
     }
     if (root->value == "^") {
         double r = std::pow((double)leftVal, (double)rightVal);
-        return (double)r;
+        return r;
     }
     if (root->value == "√") {
-        return (double)std::sqrt(leftVal);
+        return std::sqrt(leftVal);
     }
-    // throw runtime_error("Unknown operator: " + root->value);
+
+    return 0;
 }
 
 int main() {
