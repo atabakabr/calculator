@@ -4,6 +4,7 @@
 #include <stack>
 #include <regex>
 #include <cmath>
+#include <fstream>
 
 using namespace std;
 
@@ -187,7 +188,7 @@ struct Parser {
 
     Node* parseOp1Term() {
         Node* node = parseOp2Term();
-        while (!end() && (peek() == "+" || peek() == "-")) {
+        while (!end() && (peek() == priorities[4] || peek() == priorities[3])) {
             string op = next();
             Node* right = parseOp2Term();
             Node* parent = new Node(op);
@@ -200,7 +201,7 @@ struct Parser {
 
     Node* parseOp2Term() {
         Node* node = parsePowerTerm();
-        while (!end() && (peek() == "*" || peek() == "/")) {
+        while (!end() && (peek() == priorities[2] || peek() == priorities[1])) {
             string op = next();
             Node* right = parsePowerTerm();
             Node* parent = new Node(op);
@@ -213,7 +214,7 @@ struct Parser {
 
     Node* parsePowerTerm() {
         Node* node = parseFactor();
-        while (!end() && peek() == "^") {
+        while (!end() && peek() == priorities[0]) {
             string op = next();
             Node* right = parseFactor();
             Node* parent = new Node(op);
@@ -261,6 +262,29 @@ void printPostorder(Node* root) {
     cout << root->value << " ";
 }
 
+void dfs(Node* cur,ofstream& out){
+    if(!cur) return;
+    if(cur->left){
+        out << "    \""<<cur->value<<"\" -> \""<<cur->left->value<<"\";\n";
+        dfs(cur->left,out);
+    }
+    if(cur->right){
+        out<<"    \""<<cur->value<<"\" -> \""<< cur->right->value<<"\";\n";
+        dfs(cur->right,out);
+    }
+}
+
+void graph_tree(Node* root){
+    ofstream out("tree.dot");
+    out<<"digraph Tree {\n";
+    out<<"    node [shape=circle];\n";
+    if (root)
+        dfs(root,out);
+
+    out<< "}\n";
+    out.close();
+}
+
 int evaluate(Node* root) {
     if (!root) return 0;
 
@@ -304,12 +328,31 @@ int main() {
     string ans = normalize(s);
     vector<string> variables;
     string temp;
+    cout<<" give valid variables\n";
     cin>>temp;
     while(temp!="-1"){
         variables.push_back(temp);
         cin>>temp;
 
     }
+    string ops;
+    vector<string> priority;
+    cout<<" give priorities\n";
+    cin>>ops;
+    while(ops!="-1"){
+        priority.push_back(ops);
+        cin>>ops;
+
+    }
+    //cout<<"\n"<<priority.size()<<"\n";
+    if(priority.size()!=5 && priority.size()!=0){
+        cout<< "not valid priorities\n";
+        return 0;
+    }
+    if(priority.size()==0){
+        priority={"^","*", "/", "-", "+"};
+    }
+
     
     bool result=validate_prantesize(ans);
     bool regex_check=validate_regex(ans);
@@ -321,12 +364,15 @@ int main() {
     }
     vector<string> token=tokenize(varibale_counted);
     for(int i=0;i<token.size();i++){
-        //cout<<token[i]<<" ";
+        cout<<token[i]<<" ";
     }
+    cout<<"\n";
     
-    Parser P(token);
+    Parser P(token,priority);
     Node* root = P.parseStart();
-
+    graph_tree(root);
+    system("dot -Tpng tree.dot -o tree.png");
+    system("start tree.png");
     cout << "Postorder: ";
     printPostorder(root);
     cout << "\n";
